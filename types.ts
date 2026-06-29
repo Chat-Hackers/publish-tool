@@ -5,3 +5,7 @@ export type MatrixEvent = {
     sender: string;
     room_id: string;
 }
+export type Group = {
+    group_id: string;
+    room_id: string;
+}

@@ -1,56 +1,99 @@
 import "./App.css";
 import { useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
-import { getEvents, postEvent, deleteEvent } from "./requests";
+import { getPosts, postPost, deletePost, getGroup } from "./requests";
+
+const { origin, pathname } = window.location;
+const BASE_URL = `${origin}${pathname}`;
 
 export default function App() {
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get("roomId");
-  const [events, setEvents] = useState<{ event_url: string; past: boolean }[]>(
-    [],
-  );
-  const [url, setUrl] = useState("");
+  const [groupId, setGroupId] = useState<string>();
+  const [posts, setPosts] = useState<
+    { group_id: string; text: string; time: string }[]
+  >([]);
+  const [newPost, setNewPost] = useState("");
+  const [deletingPost, setDeletingPost] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  async function loadEvents(roomId: string) {
-    const events = await getEvents(roomId);
-    console.log(events);
-    setEvents(events.map((rainbow: { rainbow: string }) => rainbow.rainbow));
+  async function loadGroupId() {
+    const group = roomId ? await getGroup(roomId) : "";
+    setGroupId(group.group_id);
   }
 
-  async function createEvent() {
-    if (roomId) {
-      await postEvent(roomId, url);
-      loadEvents(roomId);
+  async function loadPosts(groupId: string) {
+    const posts = await getPosts(groupId);
+    setPosts(posts);
+  }
+
+  async function createPost() {
+    if (groupId && newPost) {
+      setNewPost("");
+      await postPost(groupId, newPost);
+      loadPosts(groupId);
     }
   }
 
-  async function removeEvent(url: string) {
-    if (roomId) {
-      await deleteEvent(roomId, url);
-      loadEvents(roomId);
+  async function removePost(text: string) {
+    if (groupId) {
+      await deletePost(groupId, text);
+      loadPosts(groupId);
     }
   }
 
   useEffect(() => {
-    if (roomId) {
-      loadEvents(roomId);
+    loadGroupId();
+    if (groupId) {
+      loadPosts(groupId);
     }
-  }, []);
+  }, [groupId]);
+
+  const publishingUrl = `${BASE_URL}/api/posts?groupId=${groupId}`;
 
   return (
     <div>
-      <h1>Rainbow Tool dashboard</h1>
+      <h1>Publish to Web</h1>
+      <h2>Web publishing url</h2>
+      <div className="copy-container">
+        <input
+          id="url-input"
+          readOnly
+          value={publishingUrl}
+          className="copy-box"
+        />
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(publishingUrl);
+            setCopied(true);
+            setTimeout(() => {
+              setCopied(false);
+            }, 2000);
+          }}
+        >
+          Copy
+        </button>
+        {copied && <p className="copy-text">Copied!</p>}
+      </div>
       <input
         type="text"
-        placeholder="event url"
-        onChange={(e) => setUrl(e.target.value)}
+        value={newPost}
+        onChange={(e) => setNewPost(e.target.value)}
+        placeholder="new post"
       ></input>
-      <button onClick={createEvent}>Add new event</button>
-      <h2>Past rainbows</h2>
-      {events.map((event) => (
+      <button onClick={createPost}>Create</button>
+      {posts.map((post) => (
         <>
-          <p>{event.event_url}</p>
-          <button onClick={() => removeEvent(url)}>Delete</button>
+          <p>{post.text}</p>
+          <p>{post.time}</p>
+          {deletingPost === post.text ? (
+            <>
+              <button onClick={() => setDeletingPost("")}>Cancel</button>
+              <button onClick={() => removePost(post.text)}>Delete</button>
+            </>
+          ) : (
+            <button onClick={() => setDeletingPost(post.text)}>Delete</button>
+          )}
         </>
       ))}
     </div>

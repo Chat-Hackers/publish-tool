@@ -1,0 +1,1 @@
+{"id":"publish","uuid":"6bd36a94-b4af-4117-bad9-830c4202cd90","url":"http://localhost:5058","emoji":"🌐","wake_word":"publish","title":"Publish to Web","description":"Creates source of posts to the web","event_types":["m.reaction"]}

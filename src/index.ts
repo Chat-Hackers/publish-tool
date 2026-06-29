@@ -3,26 +3,21 @@ import express from "express";
 import * as fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import handleMessage from "./messages";
-import { sendMessage } from './requests';
-import { } from './duckdb';
-import beginSchedule from "./scheduler";
+import handleReaction from './reactions';
+import { getGroupByRoomId, getPostsByGroupId, insertPost, deletePost } from './duckdb';
 
-const { secret } = process.env;
-
-const port = 5057;
+const port = 5058;
 
 const moduleRegistration = {
-  id: "events",
+  id: "publish",
   uuid: uuidv4(),
   url: `http://localhost:${port}`,
-  emoji: "🗓️",
-  wake_word: "events",
-  title: "Events Reminder",
-  description: "Sends reminders of upcoming events to the group",
-  secret,
+  emoji: "🌐",
+  wake_word: "publish",
+  title: "Publish to Web",
+  description: "Creates source of posts to the web",
   event_types: [
-    "m.room.message"
+    "m.reaction"
   ]
 }
 
@@ -42,34 +37,51 @@ async function start() {
   })
 
   app.post("/", async (req, res) => {
-    const { event } = req.body;
+    const { event, botUserId } = req.body;
 
     let response: { message?: string } | undefined = {};
 
-    if (event.type === "m.room.message")
-      response = await handleMessage(event);
+    console.log("event come through", event)
+
+    if (event.type === "m.reaction")
+      response = await handleReaction(event, botUserId);
 
     console.log(response)
 
     res.send({ success: true, response });
   });
 
-  app.get("/api/events", async (req, res) => {
+  app.get("/api/group", async (req, res) => {
     const { roomId } = req.query;
 
-    res.send();
+    const group = await getGroupByRoomId(roomId as string);
+    console.log(group)
+
+    res.send(group);
   })
 
-  app.post("/api/event", async (req, res) => {
-    const { roomId } = req.query;
-    const { url } = req.body;
+  app.get("/api/posts", async (req, res) => {
+    const { groupId } = req.query;
+
+    const posts = await getPostsByGroupId(groupId as string);
+
+    res.send(posts);
+  })
+
+  app.post("/api/post", async (req, res) => {
+    const { groupId } = req.query;
+    const { text } = req.body;
+
+    await insertPost(groupId as string, text);
 
     res.send({ success: true })
   })
 
-  app.delete("api/event", async (req, res) => {
-    const { roomId } = req.query;
-    const { url } = req.body;
+  app.delete("/api/post", async (req, res) => {
+    const { groupId } = req.query;
+    const { text } = req.body;
+
+    await deletePost(groupId as string, text);
 
     res.send({ success: true })
   })
@@ -79,4 +91,3 @@ async function start() {
 
 generateRegistrationFile();
 start();
-setTimeout(beginSchedule, 2000)

@@ -1,7 +1,7 @@
 {
-  "name": "events-tool",
+  "name": "publish-tool",
   "version": "1.0.0",
-  "description": "Events tool for Chat Hackers chat customisation tools",
+  "description": "Publishing tool for Chat Hackers chat customisation tools",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
@@ -16,11 +16,9 @@
     "@duckdb/node-api": "^1.4.2-r.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "node-html-parser": "^8.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router": "^7.8.2",
-    "toad-scheduler": "^3.1.0",
     "typescript": "^6.0.3",
     "uuid": "^11.0.5",
     "vite-plugin-singlefile": "^2.3.0"

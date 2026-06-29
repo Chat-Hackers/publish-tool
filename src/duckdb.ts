@@ -1,18 +1,23 @@
-import { DuckDBConnection, DuckDBInstance } from "@duckdb/node-api";
+import { DuckDBConnection, DuckDBInstance, DuckDBTimestampMillisecondsValue } from "@duckdb/node-api";
 
 let connection: DuckDBConnection;
 
 export async function startDuckDB() {
-    const eventsDuckDBFileName = "events_duckdb.db";
+    const postsDuckDBFileName = "posts_duckdb.db";
 
-    const instance = await DuckDBInstance.create(eventsDuckDBFileName);
+    const instance = await DuckDBInstance.create(postsDuckDBFileName);
     connection = await instance.connect();
 
     const tables = [
         {
-            name: "Events",
+            name: "Groups",
             creationCommand:
-                "CREATE TABLE Events (room_id VARCHAR NOT NULL, event_url VARCHAR NOT NULL, past BOOLEAN NOT NULL);",
+                "CREATE TABLE Groups (room_id VARCHAR NOT NULL, group_id VARCHAR DEFAULT gen_random_uuid()::VARCHAR);"
+        },
+        {
+            name: "Posts",
+            creationCommand:
+                "CREATE TABLE Posts (group_id VARCHAR NOT NULL, text VARCHAR NOT NULL, time TIMESTAMP_MS DEFAULT localtimestamp);",
         }
     ]
 
@@ -31,48 +36,57 @@ export async function startDuckDB() {
     });
 }
 
-export async function getEventsAll() {
-    const getEvents = `SELECT * FROM Events;`;
-    const prepared = await connection.prepare(getEvents);
-    const eventsRows = await prepared.run();
-    const events = await eventsRows.getRowObjects();
-    return events;
+export async function getGroupByRoomId(roomId: string) {
+    const getGroup = `SELECT * FROM Groups WHERE room_id = $1;`;
+    const prepared = await connection.prepare(getGroup);
+    prepared.bindVarchar(1, roomId);
+    const groupRows = await prepared.run();
+    const groups = await groupRows.getRowObjects();
+    return groups[0];
 }
 
-export async function getEventsByRoomId(roomId: string) {
-    const getEvents = `SELECT * FROM Events WHERE room_id = $1;`;
-    const prepared = await connection.prepare(getEvents);
+export async function insertGroup(roomId: string) {
+    const insertGroup = `INSERT INTO Groups (room_id) values ($1);`;
+    const prepared = await connection.prepare(insertGroup);
     prepared.bindVarchar(1, roomId);
-    const eventsRows = await prepared.run();
-    const events = await eventsRows.getRowObjects();
-    return events;
+    const group = await prepared.run();
+    return group;
 }
 
-export async function insertEvent(roomId: string, url: string) {
-    const insertEvent = `INSERT INTO Events values ($1, $2, $3);`;
-    const prepared = await connection.prepare(insertEvent);
-    prepared.bindVarchar(1, roomId);
-    prepared.bindVarchar(2, url);
-    prepared.bindBoolean(3, false);
+export async function getPostsByGroupId(groupId: string) {
+    const getPosts = `SELECT * FROM Posts WHERE group_id = $1;`;
+    const prepared = await connection.prepare(getPosts);
+    prepared.bindVarchar(1, groupId);
+    const postsRows = await prepared.run();
+    const posts = await postsRows.getRowObjects();
+    const postsWithDates = posts.map(post => ({ ...post, time: new Date(Number((post.time as DuckDBTimestampMillisecondsValue).millis)) }))
+    return postsWithDates;
+}
+
+export async function insertPost(groupId: string, text: string) {
+    const insertPost = `INSERT INTO Posts (group_id, text) values ($1, $2);`;
+    const prepared = await connection.prepare(insertPost);
+    prepared.bindVarchar(1, groupId);
+    prepared.bindVarchar(2, text);
     await prepared.run();
     return;
 }
 
-export async function updateEvent(roomId: string, url: string, past: boolean) {
-    const updateEvent = `UPDATE Events SET past = $3 WHERE room_id = $1 AND event_url = $2`;
-    const prepared = await connection.prepare(updateEvent);
-    prepared.bindVarchar(1, roomId);
-    prepared.bindVarchar(2, url);
-    prepared.bindBoolean(3, past);
+export async function updatePost(groupId: string, newText: string, oldText: string) {
+    const updatePost = `UPDATE Posts SET text = $3 WHERE group_id = $1 AND text = $2`;
+    const prepared = await connection.prepare(updatePost);
+    prepared.bindVarchar(1, groupId);
+    prepared.bindVarchar(2, oldText);
+    prepared.bindVarchar(3, newText);
     await prepared.run();
     return;
 }
 
-export async function removeEvent(roomId: string, url: string) {
-    const deleteEvent = `DELETE FROM Events WHERE room_id=$1 AND event_url=$2;`;
-    const prepared = await connection.prepare(deleteEvent);
-    prepared.bindVarchar(1, roomId);
-    prepared.bindVarchar(2, url);
+export async function deletePost(groupId: string, text: string) {
+    const deletePost = `DELETE FROM Posts WHERE group_id=$1 AND text=$2;`;
+    const prepared = await connection.prepare(deletePost);
+    prepared.bindVarchar(1, groupId);
+    prepared.bindVarchar(2, text);
     await prepared.run();
     return;
 }
