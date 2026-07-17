@@ -13,7 +13,7 @@ const moduleRegistration = {
   uuid: uuidv4(),
   url: `http://localhost:${port}`,
   emoji: "🌐",
-  wake_word: "publish",
+  introduction: "React to messages with 🌐 to add them to your public api",
   title: "Publish to Web",
   description: "Creates source of posts to the web",
   event_types: [
