@@ -1,10 +1,1 @@
-{
-  "id": "publish",
-  "uuid": "aa7dd1df-9f6b-4eb3-8626-193ffd69aa6d",
-  "url": "http://localhost:5058",
-  "emoji": "🌐",
-  "introduction": "React to messages with 🌐 to add them to your public api",
-  "title": "Publish to Web",
-  "description": "Creates source of posts to the web",
-  "event_types": ["m.reaction"]
-}
+{"id":"publish","uuid":"4bbe5274-6fce-4933-8f42-b32c679099f0","url":"http://localhost:5058","emoji":"🌐","introduction":"React to messages with 🌐 to add them to your public api","title":"Publish to Web","description":"Creates source of posts to the web","event_types":["m.reaction"]}

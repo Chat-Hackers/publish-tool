@@ -52,7 +52,7 @@ export default function App() {
   const publishingUrl = `${BASE_URL}/api/posts?groupId=${groupId}`;
 
   return (
-    <div>
+    <>
       <h1>Publish to Web</h1>
       <h2>Web publishing url</h2>
       <div className="copy-container">
@@ -96,6 +96,6 @@ export default function App() {
           )}
         </>
       ))}
-    </div>
+    </>
   );
 }
