@@ -8,7 +8,7 @@ import { getGroupByRoomId, getPostsByGroupId, insertPost, deletePost } from './d
 
 const port = 5058;
 
-const moduleRegistration = {
+const toolRegistration = {
   id: "publish",
   uuid: uuidv4(),
   url: `http://localhost:${port}`,
@@ -16,13 +16,15 @@ const moduleRegistration = {
   introduction: "React to messages with 🌐 to add them to your public api",
   title: "Publish to Web",
   description: "Creates source of posts to the web",
-  event_types: [
-    "m.reaction"
-  ]
+  event_types: {
+    active: [
+      "m.reaction"
+    ]
+  }
 }
 
 function generateRegistrationFile() {
-  fs.writeFileSync(`./${moduleRegistration.id}.json`, JSON.stringify(moduleRegistration, null, 2));
+  fs.writeFileSync(`./${toolRegistration.id}.json`, JSON.stringify(toolRegistration, null, 2));
 }
 
 async function start() {
